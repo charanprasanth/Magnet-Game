@@ -1,40 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:magnet/bloc/paint/paint_bloc.dart';
+import 'package:magnet/core/enums/player_enum.dart';
+import 'package:magnet/models/magnet_item.dart';
 
-class GamePage extends StatefulWidget {
+class GamePage extends StatelessWidget {
   const GamePage({super.key});
 
-  @override
-  State<GamePage> createState() => _GamePageState();
-}
-
-class _GamePageState extends State<GamePage> {
-  List<Offset> points = [const Offset(0, 0)];
-
-  void onUserTappedDown(TapDownDetails details) {
-    bool isLost = false;
-    double dx = details.localPosition.dx;
-    double dy = details.localPosition.dy;
-
-    for (int i = 0; i < points.length; i++) {
-      double x = points[i].dx;
-      double y = points[i].dy;
-
-      double diffX = dx - x;
-      double diffY = dy - y;
-      if (diffX.abs() <= 60 && diffY.abs() <= 60) {
-        isLost = true;
-        break;
-      }
-    }
-
-    setState(() => points.add(Offset(dx, dy)));
-
-    if(isLost) {
-      showWinningDialog();
-    }
-  }
-
-  void showWinningDialog() {
+  void showWinningDialog(context) {
     showDialog(
         context: context,
         builder: (context) {
@@ -54,7 +27,6 @@ class _GamePageState extends State<GamePage> {
                     alignment: Alignment.centerRight,
                     child: MaterialButton(
                       onPressed: () {
-                        setState(() => points.clear());
                         Navigator.of(context).pop();
                       },
                       color: Colors.green,
@@ -73,6 +45,7 @@ class _GamePageState extends State<GamePage> {
 
   @override
   Widget build(BuildContext context) {
+    final bloc = BlocProvider.of<PaintBloc>(context);
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.blue),
       bottomNavigationBar: Container(color: Colors.red, height: 60.0),
@@ -81,12 +54,31 @@ class _GamePageState extends State<GamePage> {
         padding: const EdgeInsets.all(10.0),
         child: Stack(
           children: [
-            CustomPaint(
-              painter: MyCustomPainter(points),
+            BlocBuilder<PaintBloc, PaintState>(
+              builder: (context, state) {
+                if (state is AddMagnetState) {
+                  return CustomPaint(
+                    painter: MyCustomPainter(bloc.magnets),
+                  );
+                } else if (state is GameOverState) {
+                  // showWinningDialog(context);
+                  return CustomPaint(
+                    painter: MyCustomPainter(bloc.magnets),
+                  );
+                } else {
+                  return CustomPaint(
+                    painter: MyCustomPainter(bloc.magnets),
+                  );
+                }
+              },
             ),
             GestureDetector(
               onTapDown: (details) {
-                onUserTappedDown(details);
+                double dx = details.localPosition.dx;
+                double dy = details.localPosition.dy;
+                bloc.add(
+                  AddNewMagnet(MagnetItem(Offset(dx, dy), Player.PLAYER1)),
+                );
               },
             ),
           ],
@@ -97,15 +89,20 @@ class _GamePageState extends State<GamePage> {
 }
 
 class MyCustomPainter extends CustomPainter {
-  final List<Offset> points;
+  final List<MagnetItem> magnets;
 
-  MyCustomPainter(this.points);
+  MyCustomPainter(this.magnets);
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (Offset offset in points) {
-      canvas.drawRect(Rect.fromCircle(center: offset, radius: 20),
-          Paint()..color = Colors.black);
+    for (MagnetItem magnet in magnets) {
+      Offset offset = magnet.offset;
+      Color color =
+          (magnet.player == Player.PLAYER1) ? Colors.red : Colors.blue;
+      canvas.drawRect(
+        Rect.fromCircle(center: offset, radius: 20),
+        Paint()..color = color,
+      );
     }
   }
 
