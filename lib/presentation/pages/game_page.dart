@@ -27,7 +27,7 @@ class GamePage extends StatelessWidget {
                           builder: (context, state) {
                             if (state is AddMagnetState) {
                               return CustomPaint(
-                                painter: MyCustomPainter(bloc.magnets),
+                                painter: MyCustomPainter(state.magnets),
                               );
                             } else if (state is GameOverState) {
                               return CustomPaint(

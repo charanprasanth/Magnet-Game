@@ -15,6 +15,8 @@ class PaintBloc extends Bloc<PaintEvent, PaintState> {
 
   var currentPlayer = Player.PLAYER2;
   final List<MagnetItem> magnets = [];
+  final List<MagnetItem> player1Magnets = [];
+  final List<MagnetItem> player2Magnets = [];
 
   FutureOr<void> checkAndAddNewPoint(
       AddNewMagnet event, Emitter<PaintState> emit) {
@@ -40,12 +42,19 @@ class PaintBloc extends Bloc<PaintEvent, PaintState> {
     magnets.add(event.magnetItem);
     emit.call(AddMagnetState(magnets));
     if (isLost) {
-      magnets.clear();
+      checkIsLost(event, emit);
       emit.call(GameOverState(event.magnetItem));
     }
   }
 
   FutureOr<void> startNewGame(StartNewGame event, Emitter<PaintState> emit) {
+    magnets.clear();
     emit.call(NewGameState());
+  }
+
+  FutureOr<void> checkIsLost(
+      AddNewMagnet event, Emitter<PaintState> emit) async {
+    await Future.delayed(const Duration(milliseconds: 1500));
+    emit.call(GameOverState(event.magnetItem));
   }
 }
