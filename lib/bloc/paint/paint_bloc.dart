@@ -32,8 +32,8 @@ class PaintBloc extends Bloc<PaintEvent, PaintState> {
       double diffX = dx - x;
       double diffY = dy - y;
       if (magnets[i].player != currentPlayer &&
-          diffX.abs() <= 60 &&
-          diffY.abs() <= 60) {
+          diffX.abs() <= 80 &&
+          diffY.abs() <= 80) {
         isLost = true;
         break;
       }

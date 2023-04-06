@@ -11,54 +11,59 @@ class GamePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final bloc = BlocProvider.of<PaintBloc>(context);
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
+      body: BlocBuilder<PaintBloc, PaintState>(
+        builder: (context, state) {
+          return SafeArea(
+            child: Stack(
               children: [
-                const PlayerContainer(),
-                Expanded(
-                  child: Container(
-                    color: Colors.yellow,
-                    padding: const EdgeInsets.all(10.0),
-                    child: Stack(
-                      children: [
-                        BlocBuilder<PaintBloc, PaintState>(
-                          builder: (context, state) {
-                            if (state is AddMagnetState) {
-                              return CustomPaint(
-                                painter: MyCustomPainter(state.magnets),
-                              );
-                            } else if (state is GameOverState) {
-                              return CustomPaint(
-                                painter: MyCustomPainter(bloc.magnets),
-                              );
-                            } else {
-                              return CustomPaint(
-                                painter: MyCustomPainter(bloc.magnets),
-                              );
-                            }
-                          },
+                Column(
+                  children: [
+                    const PlayerContainer(),
+                    Expanded(
+                      child: Container(
+                        color: Colors.yellow,
+                        padding: const EdgeInsets.all(10.0),
+                        child: Stack(
+                          children: [
+                            BlocBuilder<PaintBloc, PaintState>(
+                              builder: (context, state) {
+                                if (state is AddMagnetState) {
+                                  return CustomPaint(
+                                    painter: MyCustomPainter(state.magnets),
+                                  );
+                                } else if (state is GameOverState) {
+                                  return CustomPaint(
+                                    painter: MyCustomPainter(bloc.magnets),
+                                  );
+                                } else {
+                                  return CustomPaint(
+                                    painter: MyCustomPainter(bloc.magnets),
+                                  );
+                                }
+                              },
+                            ),
+                            GestureDetector(
+                              onTapDown: (details) {
+                                double dx = details.localPosition.dx;
+                                double dy = details.localPosition.dy;
+                                bloc.add(
+                                  AddNewMagnet(
+                                      MagnetItem(offset: Offset(dx, dy))),
+                                );
+                              },
+                            ),
+                          ],
                         ),
-                        GestureDetector(
-                          onTapDown: (details) {
-                            double dx = details.localPosition.dx;
-                            double dy = details.localPosition.dy;
-                            bloc.add(
-                              AddNewMagnet(MagnetItem(offset: Offset(dx, dy))),
-                            );
-                          },
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    const PlayerContainer(),
+                  ],
                 ),
-                const PlayerContainer(),
+                const GameOverWidget(),
               ],
             ),
-            const GameOverWidget(),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -146,6 +151,12 @@ class PlayerContainer extends StatelessWidget {
           decoration: BoxDecoration(
             color: isPlayer1 ? Colors.blue : Colors.red,
           ),
+          child: Center(
+            child: Text(
+              isPlayer1 ? "PLAYER 1" : "PLAYER 2",
+              style: const TextStyle(color: Colors.white, fontSize: 30.0),
+            ),
+          ),
         );
       },
     );
@@ -163,10 +174,11 @@ class MyCustomPainter extends CustomPainter {
       Offset offset = magnet.offset;
       Color color =
           (magnet.player == Player.PLAYER1) ? Colors.red : Colors.blue;
-      canvas.drawRect(
-        Rect.fromCircle(center: offset, radius: 20),
-        Paint()..color = color,
-      );
+      Paint paint = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 15;
+      canvas.drawCircle(offset, 30, paint);
     }
   }
 
