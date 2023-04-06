@@ -16,3 +16,5 @@ class GameOverState extends PaintState {
 
   GameOverState(this.magnetItem);
 }
+
+class NewGameState extends PaintState {}

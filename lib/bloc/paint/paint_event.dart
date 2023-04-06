@@ -8,3 +8,5 @@ class AddNewMagnet extends PaintEvent {
 
   AddNewMagnet(this.magnetItem);
 }
+
+class StartNewGame extends PaintEvent {}

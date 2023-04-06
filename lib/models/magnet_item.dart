@@ -4,7 +4,7 @@ import '../core/enums/player_enum.dart';
 
 class MagnetItem {
   final Offset offset;
-  final Player player;
+  Player? player;
 
-  MagnetItem(this.offset, this.player);
+  MagnetItem({required this.offset, this.player});
 }

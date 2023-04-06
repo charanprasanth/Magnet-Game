@@ -7,83 +7,147 @@ import 'package:magnet/models/magnet_item.dart';
 class GamePage extends StatelessWidget {
   const GamePage({super.key});
 
-  void showWinningDialog(context) {
-    showDialog(
-        context: context,
-        builder: (context) {
-          return Card(
-            color: Colors.transparent,
-            child: Center(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                ),
-                height: 100.0,
-                width: 300.0,
-                child: ListTile(
-                  title: const Text("Player 1 won the game"),
-                  subtitle: Align(
-                    alignment: Alignment.centerRight,
-                    child: MaterialButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      color: Colors.green,
-                      child: const Padding(
-                        padding: EdgeInsets.all(4),
-                        child: Text("Close"),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        });
-  }
-
   @override
   Widget build(BuildContext context) {
     final bloc = BlocProvider.of<PaintBloc>(context);
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.blue),
-      bottomNavigationBar: Container(color: Colors.red, height: 60.0),
-      body: Container(
-        color: Colors.yellow,
-        padding: const EdgeInsets.all(10.0),
+      body: SafeArea(
         child: Stack(
           children: [
-            BlocBuilder<PaintBloc, PaintState>(
-              builder: (context, state) {
-                if (state is AddMagnetState) {
-                  return CustomPaint(
-                    painter: MyCustomPainter(bloc.magnets),
-                  );
-                } else if (state is GameOverState) {
-                  // showWinningDialog(context);
-                  return CustomPaint(
-                    painter: MyCustomPainter(bloc.magnets),
-                  );
-                } else {
-                  return CustomPaint(
-                    painter: MyCustomPainter(bloc.magnets),
-                  );
-                }
-              },
+            Column(
+              children: [
+                const PlayerContainer(),
+                Expanded(
+                  child: Container(
+                    color: Colors.yellow,
+                    padding: const EdgeInsets.all(10.0),
+                    child: Stack(
+                      children: [
+                        BlocBuilder<PaintBloc, PaintState>(
+                          builder: (context, state) {
+                            if (state is AddMagnetState) {
+                              return CustomPaint(
+                                painter: MyCustomPainter(bloc.magnets),
+                              );
+                            } else if (state is GameOverState) {
+                              return CustomPaint(
+                                painter: MyCustomPainter(bloc.magnets),
+                              );
+                            } else {
+                              return CustomPaint(
+                                painter: MyCustomPainter(bloc.magnets),
+                              );
+                            }
+                          },
+                        ),
+                        GestureDetector(
+                          onTapDown: (details) {
+                            double dx = details.localPosition.dx;
+                            double dy = details.localPosition.dy;
+                            bloc.add(
+                              AddNewMagnet(MagnetItem(offset: Offset(dx, dy))),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const PlayerContainer(),
+              ],
             ),
-            GestureDetector(
-              onTapDown: (details) {
-                double dx = details.localPosition.dx;
-                double dy = details.localPosition.dy;
-                bloc.add(
-                  AddNewMagnet(MagnetItem(Offset(dx, dy), Player.PLAYER1)),
-                );
-              },
-            ),
+            const GameOverWidget(),
           ],
         ),
       ),
+    );
+  }
+}
+
+class GameOverWidget extends StatelessWidget {
+  const GameOverWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    bool isGameOver = false;
+    final bloc = BlocProvider.of<PaintBloc>(context);
+    return BlocBuilder<PaintBloc, PaintState>(
+      builder: (context, state) {
+        if (state is GameOverState) {
+          isGameOver = true;
+        } else {
+          isGameOver = false;
+        }
+        return Visibility(
+          visible: isGameOver,
+          child: Container(
+            height: MediaQuery.of(context).size.height,
+            width: MediaQuery.of(context).size.width,
+            color: Colors.grey.shade300.withOpacity(0.8),
+            child: AnimatedAlign(
+              duration: const Duration(milliseconds: 500),
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Game Over",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 25,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    "${bloc.currentPlayer.name.toLowerCase()} won the game",
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 25,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  InkWell(
+                    onTap: () => bloc.add(StartNewGame()),
+                    child: const Text(
+                      "Exit",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class PlayerContainer extends StatelessWidget {
+  const PlayerContainer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = BlocProvider.of<PaintBloc>(context);
+    return BlocBuilder<PaintBloc, PaintState>(
+      bloc: bloc,
+      builder: (context, state) {
+        bool isPlayer1 = (bloc.currentPlayer == Player.PLAYER1);
+        return Container(
+          height: 60,
+          decoration: BoxDecoration(
+            color: isPlayer1 ? Colors.blue : Colors.red,
+          ),
+        );
+      },
     );
   }
 }

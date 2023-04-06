@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:magnet/core/enums/player_enum.dart';
 import 'package:magnet/models/magnet_item.dart';
 part 'paint_event.dart';
 part 'paint_state.dart';
@@ -7,11 +10,16 @@ part 'paint_state.dart';
 class PaintBloc extends Bloc<PaintEvent, PaintState> {
   PaintBloc() : super(PaintInitial()) {
     on<AddNewMagnet>(checkAndAddNewPoint);
+    on<StartNewGame>(startNewGame);
   }
 
-  List<MagnetItem> magnets = [];
+  var currentPlayer = Player.PLAYER2;
+  final List<MagnetItem> magnets = [];
 
-  void checkAndAddNewPoint(AddNewMagnet event, Emitter<PaintState> emitter) {
+  FutureOr<void> checkAndAddNewPoint(
+      AddNewMagnet event, Emitter<PaintState> emit) {
+    currentPlayer =
+        (currentPlayer == Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
     bool isLost = false;
     double dx = event.magnetItem.offset.dx;
     double dy = event.magnetItem.offset.dy;
@@ -21,16 +29,23 @@ class PaintBloc extends Bloc<PaintEvent, PaintState> {
 
       double diffX = dx - x;
       double diffY = dy - y;
-      if (diffX.abs() <= 60 && diffY.abs() <= 60) {
+      if (magnets[i].player != currentPlayer &&
+          diffX.abs() <= 60 &&
+          diffY.abs() <= 60) {
         isLost = true;
         break;
       }
     }
+    event.magnetItem.player = currentPlayer;
     magnets.add(event.magnetItem);
-    emitter.call(AddMagnetState(magnets));
+    emit.call(AddMagnetState(magnets));
     if (isLost) {
       magnets.clear();
-      emitter.call(GameOverState(event.magnetItem));
+      emit.call(GameOverState(event.magnetItem));
     }
+  }
+
+  FutureOr<void> startNewGame(StartNewGame event, Emitter<PaintState> emit) {
+    emit.call(NewGameState());
   }
 }
