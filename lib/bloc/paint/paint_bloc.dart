@@ -15,13 +15,13 @@ class PaintBloc extends Bloc<PaintEvent, PaintState> {
 
   var currentPlayer = Player.PLAYER2;
   final List<MagnetItem> magnets = [];
-  final List<MagnetItem> player1Magnets = [];
-  final List<MagnetItem> player2Magnets = [];
+  var player1Count = 0;
+  var player2Count = 0;
+  final maxMagnetCount = 15;
 
   FutureOr<void> checkAndAddNewPoint(
       AddNewMagnet event, Emitter<PaintState> emit) {
-    currentPlayer =
-        (currentPlayer == Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
+    setPlayerAndCount();
     bool isLost = false;
     double dx = event.magnetItem.offset.dx;
     double dy = event.magnetItem.offset.dy;
@@ -44,11 +44,25 @@ class PaintBloc extends Bloc<PaintEvent, PaintState> {
     if (isLost) {
       checkIsLost(event, emit);
       emit.call(GameOverState(event.magnetItem));
+    } else if (player1Count == player2Count && player1Count == maxMagnetCount) {
+      emit.call(GameDrawState());
+    }
+  }
+
+  setPlayerAndCount() {
+    if (isPlayer1()) {
+      currentPlayer = Player.PLAYER2;
+      player2Count++;
+    } else {
+      currentPlayer = Player.PLAYER1;
+      player1Count++;
     }
   }
 
   FutureOr<void> startNewGame(StartNewGame event, Emitter<PaintState> emit) {
     magnets.clear();
+    player1Count = 0;
+    player2Count = 0;
     emit.call(NewGameState());
   }
 
@@ -57,4 +71,11 @@ class PaintBloc extends Bloc<PaintEvent, PaintState> {
     await Future.delayed(const Duration(milliseconds: 1500));
     emit.call(GameOverState(event.magnetItem));
   }
+
+  int getMagnetsLeft() {
+    return maxMagnetCount - (isPlayer1() ? player1Count : player2Count);
+  }
+
+  bool isPlayer1() => currentPlayer == Player.PLAYER1;
+
 }
